@@ -1,0 +1,37 @@
+{
+  "episodes": 206,
+  "frames": 25650,
+  "fps": 10,
+  "episode_length": {
+    "min": 49.0,
+    "median": 122.0,
+    "mean": 124.51456310679612,
+    "max": 246.0
+  },
+  "episodes_reaching_success": 0,
+  "episode_max_reward_mean": 0.8922998905181885,
+  "action_minus_state_distance_px": {
+    "median": 19.333053588867188,
+    "p90": 46.203941726684576
+  },
+  "action_range": {
+    "min": [
+      12.0,
+      25.0
+    ],
+    "max": [
+      511.0,
+      511.0
+    ]
+  },
+  "state_range": {
+    "min": [
+      13.45642375946045,
+      32.93829345703125
+    ],
+    "max": [
+      496.14617919921875,
+      510.9578857421875
+    ]
+  }
+}

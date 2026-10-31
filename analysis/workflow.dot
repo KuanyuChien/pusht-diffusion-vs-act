@@ -1,0 +1,44 @@
+// Whole-project workflow. Render: dot -Tpng -Gdpi=150 workflow.dot -o ../results/demo/workflow.png
+digraph workflow {
+  rankdir=TB; newrank=true; nodesep=0.35; ranksep=0.45;
+  fontname="DejaVu Sans"; fontsize=13; labeljust=l;
+  node [fontname="DejaVu Sans", fontsize=11, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#8a8984", penwidth=1.2, margin="0.15,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#52514e", fontcolor="#52514e", arrowsize=0.7];
+
+  subgraph cluster_login {
+    label="LOGIN NODE (granite1): internet, no heavy compute"; style="rounded,filled"; fillcolor="#eaf2fc"; color="#2a78d6"; fontcolor="#1d5aa3";
+    setup   [label="1  Set up environment\nconda (Python 3.12) + LeRobot 0.6.2\n[pusht, diffusion, training] + ffmpeg"];
+    download[label="2  Download to scratch\ndataset lerobot/pusht (fixed root)\nofficial DP checkpoint · ImageNet ResNet18"];
+    explore [label="3  Explore dataset\n206 demos, 96×96 images\naction = target point"];
+    migrate [label="4  Migrate official DP\nto new processor format\n(tools/migrate_official.py)"];
+    config  [label="5  Match configs\nDP: diff vs official config.json (6 fields)\nACT: no official config → chunk 16 / 8"];
+  }
+
+  subgraph cluster_gpu {
+    label="GPU NODE"; style="rounded,filled"; fillcolor="#fdeee7"; color="#eb6834"; fontcolor="#b4481f";
+    check   [label="6  check_env.slurm (1 min)\nall jobs: sbatch, 1× A800, offline\nGPU · offline data · simulator · model"];
+    baseline[label="7  Validate eval pipeline\nofficial DP: 10 → 500 episodes\nbaseline 59.4%"];
+    smoke   [label="8  Smoke test (2 × 3 min)\ntrain 1k steps → resume to 2k\nmeasure speed, memory, checkpoint size"];
+    ok      [label="pass?", shape=diamond, style=filled, fillcolor="#ffffff", margin="0.05,0.05"];
+    fix     [label="read log → find cause\n→ fix → problem log", fillcolor="#fbe3e3", color="#e34948"];
+    train   [label="9  Full training: 200k steps\nDP 3.5 h · ACT 1.5 h\ncheckpoint + 50-episode eval every 25k"];
+    eval    [label="10  eval_ckpt.slurm\n500 episodes × 8 checkpoints × 2 policies\nsame 500 starting states (seed 1000)"];
+  }
+
+  subgraph cluster_out {
+    label="ANALYSIS & RESULTS"; style="rounded,filled"; fillcolor="#e8f6ef"; color="#1baf7a"; fontcolor="#13805a";
+    analyze [label="11  Analyze\nparse logs (regex) · success-vs-step curves\npaired McNemar tests · failure types"];
+    results [label="Results\nDP 67.0%  ·  ACT 31.6%  (500 eps)\nDP > baseline p=0.009 · DP > ACT p≈1e-31", penwidth=2, color="#13805a"];
+    demo    [label="12  Demo\n2×3 video grid · figures\nREADME · reports · models backed up"];
+    github  [label="GitHub\n(pending advisor OK)", style="rounded,dashed,filled", fillcolor="#ffffff"];
+  }
+
+  setup -> download -> explore -> migrate -> config;
+  config -> check [lhead=cluster_gpu];
+  check -> baseline -> smoke -> ok;
+  ok -> train [label=" yes"];
+  ok -> fix [label=" no"];
+  fix -> smoke [label=" retry", style=dashed];
+  train -> eval -> analyze -> results -> demo -> github;
+  { rank=same; ok; fix; }
+}

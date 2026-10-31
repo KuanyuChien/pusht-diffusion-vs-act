@@ -1,0 +1,8 @@
+# Model checkpoints: 1.2 GB, over GitHub's 100 MB file limit
+models/
+
+# Raw Slurm logs: summarized in results/
+logs/
+
+__pycache__/
+*.pyc
